@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTV Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <style>
+        body { text-align: center; }
+        #video { width: 80%; }
+        #graph { width: 80%; height: 400px; }
+    </style>
+</head>
+<body>
+    <h1>CCTV Video Feed</h1>
+    <img id="video" src="{{ url_for('video_feed') }}" />
+    <h2>People Count Graph</h2>
+    <div class="chart-container">
+        <canvas id="myChart" width="1000" height="600"></canvas>
+    </div>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'People Count',
+                    borderColor: 'rgb(75, 192, 192)',
+                    data: []
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        socket.on('updateGraph', function(data) {
+            var labels = Array.from({ length: data.data.length }, (_, i) => i);
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data.data.map((value, index) => ({ x: index, y: value }));
+            chart.update();
+        });
+
+        socket.on('alert', function(data) {
+            if (data.alert) {
+                alert("People count has exceeded the threshold! Consider reducing the number of people or improving space utilization.");
+            }
+        });
+    </script>
+</body>
+</html>

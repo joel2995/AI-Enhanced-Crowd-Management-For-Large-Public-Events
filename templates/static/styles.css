@@ -1,0 +1,12 @@
+body {
+    text-align: center;
+}
+
+#video {
+    width: 80%;
+}
+
+#myChart {
+    width: 80%;
+    margin: 20px auto;
+}
