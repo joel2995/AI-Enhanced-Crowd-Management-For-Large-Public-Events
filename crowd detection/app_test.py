@@ -4,17 +4,20 @@ import numpy as np
 import threading
 import time
 
+
 app = Flask(__name__)
 
 CONFIDENCE_THRESHOLD = 0.5
 NMS_THRESHOLD = 0.4
 ALERT_THRESHOLD = 3
 
-net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg")
+net = cv2.dnn.readNet("C:/Users/DEEPAN/Desktop/Hackmageddon/FIVEDEVELOPERS/crowd detection/yolov3.weights", "C:/Users/DEEPAN/Desktop/Hackmageddon/FIVEDEVELOPERS/crowd detection/yolov3.cfg")
 layer_names = net.getLayerNames()
 output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
 
-with open("coco.names", "r") as f:
+names_path = "C:/Users/DEEPAN/Desktop/Hackmageddon/FIVEDEVELOPERS/crowd detection/coco.names"
+
+with open(names_path, "r") as f:
     classes = [line.strip() for line in f.readlines()]
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
