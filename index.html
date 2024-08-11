@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment and Behavior Analysis</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { display: flex; }
+        .video { flex: 1; }
+        .analysis { flex: 1; padding: 20px; }
+        .chart-container { width: 100%; height: 300px; }
+        .button-group { margin-bottom: 20px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="video">
+            <h2>Video Stream</h2>
+            <img src="{{ url_for('video_feed') }}" width="100%">
+        </div>
+        <div class="analysis">
+            <h2>Analysis</h2>
+            <div class="button-group">
+                <button onclick="showChart('sentiment')">Sentiment</button>
+                <button onclick="showChart('behavior')">Behavior</button>
+                <button onclick="showChart('anomaly')">Anomaly</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let chartType = 'sentiment';
+
+        function createChart(chartType, labels, data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (chart) {
+                chart.destroy();
+            }
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: chartType.charAt(0).toUpperCase() + chartType.slice(1),
+                        data: data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { beginAtZero: true },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    if (chart) {
+                        const newLabel = new Date().toLocaleTimeString();
+                        chart.data.labels.push(newLabel);
+                        if (chart.data.labels.length > 60) {
+                            chart.data.labels.shift();
+                        }
+
+                        chart.data.datasets[0].data.push(data[`${chartType}_over_time`].slice(-1)[0]);
+                        if (chart.data.datasets[0].data.length > 60) {
+                            chart.data.datasets[0].data.shift();
+                        }
+
+                        chart.update();
+                    }
+                });
+        }
+
+        function showChart(type) {
+            chartType = type;
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    createChart('line', 
+                        Array.from({ length: 60 }, (_, i) => new Date(Date.now() - (59 - i) * 1000).toLocaleTimeString()),
+                        data[`${chartType}_over_time`].slice(-60)
+                    );
+                });
+        }
+
+        setInterval(updateData, 1000);
+        showChart('sentiment'); // Initialize with sentiment chart
+    </script>
+</body>
+</html>
